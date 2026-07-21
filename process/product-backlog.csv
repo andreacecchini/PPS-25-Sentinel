@@ -1,1 +1,4 @@
-Priority,Item,Details,Initial Effort Size,1,2,3,4,5,6
+ ID,Priority, Item, Details, Initial Effort Size, 1, 2, 3, 4, 5, 6,
+PB-01,1,"As devs, we need to setup the development process",,2,,,,,,,
+PB-02,2,"As devs, we need to draft the Requirment Specification to enhance our domain awareness.",,5,,,,,,,
+PB-03,3,"As devs, we need to draft an initial Architectural Design Diagram",,5,,,,,,,
