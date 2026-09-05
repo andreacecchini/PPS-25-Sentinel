@@ -14,6 +14,11 @@ import it.unibo.sentinel.core.collisions.CollisionHandler
   */
 final case class StepResult(snapshot: Snapshot, events: Seq[Event])
 
+/** The history of the simulation as a sequence of pairs of events and the tick
+  * at which they occurred.
+  */
+type History = Vector[(Event, Tick)]
+
 /** Represents the discrete-time simulation of a scenario. It is responsible for
   * keeping track of the current time and for executing the actions of the
   * scenario at each tick.
@@ -74,18 +79,24 @@ object Simulation:
       new BasicSimulation(world, Phase.all) with TimeLimit(limit)
 
   private abstract class AbstractSimulation extends Simulation:
-    protected def world: Environment
+    def world: Environment
 
-  private class BasicSimulation(
-      val world: Environment,
-      phases: Seq[Phase]
-  ) extends AbstractSimulation:
+    def history: History = recorded
+
+    private var recorded: History = Vector.empty
+
+    protected final def recordEvents(events: Seq[Event], tick: Tick): Unit =
+      recorded = recorded ++ (for event <- events yield (event, tick))
+
+  private class BasicSimulation(val world: Environment, phases: Seq[Phase])
+      extends AbstractSimulation:
     private var currentTime: Tick = Tick(0)
 
     def time: Tick = currentTime
 
     def step(): StepResult =
       val events = phases.flatMap(_.apply(world))
+      recordEvents(events, currentTime)
       currentTime = currentTime.next
       StepResult(snapshot = world.snapshot, events = events)
 
@@ -96,10 +107,12 @@ object Simulation:
       summon[Ordering[Tick]].gteq(time, max)
 
     abstract override def step(): StepResult =
+      val now = time
       val stepResult = super.step()
       if limitReached
       then
         val lastEvents = world.end
+        recordEvents(lastEvents, now)
         StepResult(
           snapshot = world.snapshot,
           events = stepResult.events ++ lastEvents
